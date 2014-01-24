@@ -6,9 +6,9 @@ using namespace std;
 ifstream in("sumfact.in");
 ofstream out("sumfact.out");
 
-vector<unsigned> facts;
+vector<unsigned long long> facts;
 
-void InitFacts(unsigned n) {
+void InitFacts(unsigned long long n) {
     facts.push_back(1);
     size_t i = 2;
     while(facts.back() < n)
@@ -16,26 +16,26 @@ void InitFacts(unsigned n) {
     if(facts.back()!=n)facts.pop_back();
 }
 
-vector<unsigned> FactDesc(unsigned n) {
-    vector<unsigned> sol;
+vector<unsigned long long> FactDesc(unsigned long long n) {
+    vector<unsigned long long> sol;
     sol.resize(facts.size());
-    for(size_t i = sol.size(); i > 0; --i) {
-        unsigned curCnt = 0;
-        while(n>=facts[i-1]){
-            n-=facts[i-1];
+    for(int i = sol.size()-1; i >= 0; --i) {
+        unsigned long long curCnt = 0;
+        while(n>=facts[i]){
+            n-=facts[i];
             curCnt++;
         }
-        sol[i-1]=curCnt;
+        sol[i]=curCnt;
     }
     return sol;
 }
 
 int main() {
-    unsigned n;
+    unsigned long long n;
     in >> n;
 
     InitFacts(n);
-    vector<unsigned> desc = FactDesc(n);
+    vector<unsigned long long> desc = FactDesc(n);
 
     out << desc.size() << '\n';
     for(size_t i = 0; i < desc.size(); ++i) {
