@@ -6,7 +6,27 @@ using namespace std;
 ifstream in("aparitii.in");
 ofstream out("aparitii.out");
 
-unordered_map<unsigned,unsigned> fr;
+unsigned cifFr[10][10];
+
+void ProcessNr(unsigned n) {
+	size_t i = 0;
+	while(n) {
+		cifFr[i++][n%10]++;
+		n/=10;
+	}
+}
+
+unsigned MissingNumber(unsigned k) {
+	unsigned number = 0;
+	for(int i = 9; i >= 0; --i) {
+		number*=10;
+		for(unsigned c = 0; c < 10; ++c) {
+			if(cifFr[i][c]%k!=0)
+				number += c;
+		}
+	}
+	return number;
+}
 
 int main() {
 	unsigned n,k;
@@ -15,19 +35,8 @@ int main() {
 	for(size_t i = 0; i < n; ++i) {
 		unsigned a;
 		in >> a;
-		if(fr.count(a))
-			fr[a]++;
-		else 
-			fr[a]=1;
+		ProcessNr(a);
 	}
 
-	for(const auto &i:fr) {
-		if(i.second%k!=0) {
-			out << i.first << '\n';
-			return 0;
-		}
-	}
-
-	return -1;
-
+	out << MissingNumber(k);
 }
