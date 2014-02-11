@@ -50,6 +50,10 @@ public:
 				}
 			}
 		}
+		for(size_t i = 0; i < nNodes; ++i) {
+			if(dist[i]==INF)dist[i] = 0;
+			else dist[i]++;
+		}
 		return dist;
 	}
 	size_t getNNodes() {
@@ -76,10 +80,7 @@ int main() {
 
 	vec_u dists = graph.fromOnetoAll(0);
 	for(size_t i = 1; i < graph.getNNodes(); ++i) {
-		if(dists[i]!=INF)
-			out << dists[i]+1 << ' ';
-		else
-			out << "0 ";
+		out << dists[i] << ' ';
 	}
 	return 0;
 }
