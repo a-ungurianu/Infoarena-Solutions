@@ -1,4 +1,5 @@
 #include <fstream>
+#include <iostream>
 #include <vector>
 #include <utility>
 #include <algorithm>
@@ -14,9 +15,52 @@ ofstream out("infasuratoare.out");
 
 vector<Point> points;
 
-double cross(const Point &O, const Point &A, const Point &B) {
-	return (A.first - O.first) * (B.second - O.second) - (A.second - O.second) * (B.first - O.first);
-}
+class ConvexHullAlg {
+
+public:
+	ConvexHullAlg() {}
+	ConvexHullAlg(vector<Point> pts)
+		{
+			points = pts;
+			nPoints = pts.size();
+		}
+	void addPoint(double x, double y) {
+		points.push_back(Point(x,y));
+	}
+
+	vector<Point> getHull() {
+		vector<Point> hull;
+		hull.resize(2*nPoints);
+
+		sort(points.begin(), points.end());
+
+		size_t k = 0;
+
+		for(size_t i = 0; i < nPoints; ++i) {
+			while(k >= 2 && turn(hull[k-2],hull[k-1],points[i]) == -1) k--;
+			hull[k++] = points[i];
+		}
+
+		for(int i = nPoints-2, t = k+1; i >= 0; --i) {
+			while(k >= t && turn(hull[k-2],hull[k-1],points[i]) == -1) k--;
+			hull[k++] = points[i];
+		}
+		hull.resize(k-1);
+
+		return hull;
+	}
+
+private:
+	int turn(const Point &O, const Point &A, const Point &B) {
+		double rot = (A.first - O.first) * (B.second - O.second) - (A.second - O.second) * (B.first - O.first);
+		if(rot > 0) return 1;
+		else if(rot == 0) return 0;
+		else return -1;
+	}
+
+	size_t nPoints;
+	vector<Point> points;
+};
 
 int main() {
 	size_t n;
@@ -28,25 +72,13 @@ int main() {
 		points[i]=Point(x,y);
 	}
 
-	vector<Point> hull;
-	hull.resize(2*n);
+	cerr << "Works";
 
-	sort(points.begin(), points.end());
+	ConvexHullAlg hullSolve(points);
+	vector<Point> hull = hullSolve.getHull();
 
-	size_t k = 0;
-
-	for(size_t i = 0; i < n; ++i) {
-		while(k >= 2 && cross(hull[k-2],hull[k-1],points[i]) < 0) k--;
-		hull[k++] = points[i];
-	}
-
-	for(int i = n-2, t = k+1; i >= 0; --i) {
-		while(k >= t && cross(hull[k-2],hull[k-1],points[i]) < 0) k--;
-		hull[k++] = points[i];
-	}
-
-	out << k-1 << '\n';
+	out << hull.size() << '\n';
 	out << setprecision(6) << fixed;
-	for(size_t i = 0; i < k-1; ++i)
+	for(size_t i = 0; i < hull.size(); ++i)
 		out << hull[i].first << ' ' << hull[i].second << '\n';
 }
