@@ -57,6 +57,7 @@ int main() {
 	for(unsigned i = 0; i < n; ++i)
 		if(!viz[i])
 			dfs1(i);
+
 	while(!stk.empty()) {
 		int i = stk.top();
 		stk.pop();
