@@ -32,7 +32,7 @@ void UniteSets(size_t s1, size_t s2) {
 	if(forest[repS1].rank < forest[repS2].rank) {
 		forest[repS1].parent = repS2;
 	}
-	else if(forest[repS1].rank < forest[repS2].rank) {
+	else if(forest[repS1].rank > forest[repS2].rank) {
 		forest[repS2].parent = repS1;
 	}
 	else {
