@@ -1,78 +1,100 @@
 #include <fstream>
-#include <iostream>
 #include <vector>
 #include <stack>
-#include <list>
+
 using namespace std;
 
-ifstream in ("ctc.in");
-ofstream out ("ctc.out");
+ifstream in("ctc.in");
+ofstream out("ctc.out");
 
-vector<bool> viz;
-vector<bool> viz2;
-vector<list<unsigned> > adLs;
-vector<list<unsigned> > adLsT;
-stack<unsigned> stk;
-vector<list<unsigned> > ctc;
+class Graph {
 
-int n;
+public:
+    Graph(size_t n) : nrNodes(n) {
+        adLs.resize(nrNodes);
 
-void dfs1(unsigned i) {
-	for(const auto &j:adLs[i]) {
-		if(!viz[j]) {
-			viz[j]=true;
-			dfs1(j);
-		}
-	}
-	stk.push(i);
-}
+    }
+    void addEdge(unsigned a, unsigned b) {
+        adLs[a].push_back(b);
+    }
+    const vector<unsigned> &getNeigh(unsigned b) {
+        return adLs[b];
+    }
+    unsigned getNrNodes() {
+        return nrNodes;
+    }
+private:
+    vector<vector<unsigned>> adLs;
+    size_t nrNodes;
+};
 
-void dfs2(unsigned i) {
-	for(const auto &j:adLsT[i]) {
-		if(!viz2[j]) {
-			viz2[j]=true;
-			dfs2(j);
-		}
-	}
-	
-	ctc.back().push_back(i);
-}
+class StronglyConnectedFinder {
+
+public:
+    StronglyConnectedFinder(Graph g) : graph(g), cnt(1) {
+        index.resize(graph.getNrNodes());
+        lowlink.resize(graph.getNrNodes());
+        inStack.resize(graph.getNrNodes(),false);
+    }
+    vector<vector<unsigned>> operator()() {
+        for(size_t i = 0; i < graph.getNrNodes(); ++i)
+            if(!index[i])
+                StrongConnect(i);
+        return components;
+    }
+private:
+    void StrongConnect(unsigned nd) {
+        index[nd] = cnt;
+        lowlink[nd] = cnt;
+        cnt++;
+        ndStk.push(nd);
+        inStack[nd] = true;
+        for(const auto &v:graph.getNeigh(nd)) {
+            if(index[v] == 0) {
+                StrongConnect(v);
+                lowlink[nd] = min(lowlink[nd],lowlink[v]);
+            }
+            else if(inStack[v]) {
+                lowlink[nd] = min(lowlink[nd],index[v]);
+            }
+        }
+
+        if(lowlink[nd] == index[nd]) {
+            components.push_back(vector<unsigned>());
+            unsigned v;
+            do {
+                v = ndStk.top(); ndStk.pop();
+                inStack[v] = false;
+                components.back().push_back(v);
+            } while(v != nd);
+        }
+    }
+    size_t cnt;
+    stack<unsigned> ndStk;
+    vector<bool> inStack;
+    vector<unsigned> index;
+    vector<unsigned> lowlink;
+    vector<vector<unsigned>> components;
+    Graph graph;
+};
 
 int main() {
-	in >> n;
-	viz.resize(n);
-	viz2.resize(n);
-	adLsT.resize(n);
-	adLs.resize(n);
-	
-	int m;
-	in >> m;
-	while(m--) {
-		unsigned a,b;
-		in >> a >> b;
-		adLs[a-1].push_back(b-1);
-		adLsT[b-1].push_back(a-1);
-	}
-
-	for(unsigned i = 0; i < n; ++i)
-		if(!viz[i])
-			dfs1(i);
-
-	while(!stk.empty()) {
-		int i = stk.top();
-		stk.pop();
-		if(!viz2[i]) {
-			ctc.resize(ctc.size() + 1);
-			viz2[i]=true;
-			dfs2(i);
-		}
-	}
-	out << ctc.size() << '\n';
-	for(const auto s:ctc) {
-		for(const auto i:s) {
-			out << i+1 << ' ';
-		}
-		out << '\n';
-	}
-	return 0;
+    size_t n;
+    in >> n;
+    Graph gr(n);
+    size_t m;
+    in >> m;
+    for(size_t i = 0; i < m; ++i) {
+        unsigned a,b;
+        in >> a >> b;
+        gr.addEdge(a-1,b-1);
+    }
+    StronglyConnectedFinder solve(gr);
+    vector<vector<unsigned>> scc = solve();
+    out << scc.size() << '\n';
+    for(size_t i = 0; i < scc.size(); ++i) {
+        for(size_t j = 0; j < scc[i].size(); ++j)
+            out << scc[i][j] + 1 << ' ';
+        out << '\n';
+    }
 }
