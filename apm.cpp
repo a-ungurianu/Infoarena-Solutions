@@ -47,46 +47,48 @@ private:
 		}
 		return forest[i].parent;
 	}
+
 	vector<Node> forest;
 };
 
 struct Edge {
 	unsigned a,b;
 	int cost;
-	bool operator< (const Edge &e) const {
-		return cost < e.cost;
-	}
 };
 
 int main() {
 	size_t n,m;
 	in >> n;
 	in >> m;
-	vector<Edge> edges(m);
 	DisjointSets forest(n);
+    vector<Edge> edges(m);
 
 	for(size_t i = 0; i < m; ++i) {
 		in >> edges[i].a >> edges[i].b >> edges[i].cost;
 	}
-	sort(edges.begin(), edges.end());
+
+	sort(edges.begin(), edges.end(),[] (Edge e1, Edge e2){ return e1.cost < e2.cost; });
 
 	vector<Edge> sol;
 
-	auto it = edges.begin();
+    for(Edge edge:edges)
+    {
+        if(sol.size() >= n-1) break;
 
-	while(sol.size() < n-1 && it!=edges.end()) {
-		if(!forest.areInSameSet(it->a-1, it->b-1)) {
-			sol.push_back(*it);
-			forest.unite(it->a-1,it->b-1);
+        if(!forest.areInSameSet(edge.a - 1, edge.b - 1)) {
+			sol.push_back(edge);
+			forest.unite(edge.a - 1,edge.b - 1);
 		}
-		it++;
 	}
-	int sum = 0;
-	for(size_t i = 0; i < sol.size(); ++i) 
-		sum+=sol[i].cost;
-	out << sum << '\n';
+
+	int totalCost = 0;
+	for(size_t i = 0; i < sol.size(); ++i)
+		totalCost+=sol[i].cost;
+
+    out << totalCost << '\n';
 	out << sol.size() << '\n';
-	for(size_t i = 0; i < sol.size(); ++i) {
+
+    for(size_t i = 0; i < sol.size(); ++i) {
 		out << sol[i].a << ' ' << sol[i].b << '\n';
 	}
 
