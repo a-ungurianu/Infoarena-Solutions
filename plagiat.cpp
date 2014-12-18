@@ -2,7 +2,6 @@
 #include <vector>
 #include <unordered_map>
 #include <cmath>
-#include <cassert>
 #include <limits>
 
 struct Point {
@@ -10,17 +9,34 @@ struct Point {
     int y;
 };
 
+double getLength(Point p1, Point p2) {
+    return std::sqrt((p2.x-p1.x)*(p2.x-p1.x) +
+                     (p2.y-p1.y)*(p2.y-p1.y));
+}
+
+// Calculate the slope of a segment defined by two points
+double getSlope(Point p1, Point p2) {
+    return static_cast<double>(p2.y-p1.y) / (p2.x - p1.x);
+}
+
 struct Segment {
     double length;
     double slope;
+
+    //Create a segment given two points
+    Segment(const Point & p1, const Point & p2) :
+        length(getLength(p1,p2)),
+        slope(getSlope(p1,p2)) {}
+
 };
 
 
-// NOTE: Always use this for float equality
+// NOTE: Not absolutly correct, but works for our purposes
 bool fEqal(double d1, double d2) {
-    return abs(d1-d2) < std::numeric_limits<double>::epsilon();
+    return std::abs(d1-d2) < std::numeric_limits<double>::epsilon();
 }
 
+// These specializations are needed for unordered_map<Segment> to work
 namespace std {
     template <> struct hash<Segment>
         {
@@ -42,22 +58,6 @@ namespace std {
 std::ifstream in("plagiat.in"); // Input file
 std::ofstream out("plagiat.out"); // Output file
 
-double getLength(Point p1, Point p2) {
-    return std::sqrt((p2.x-p1.x)*(p2.x-p1.x) +
-                     (p2.y-p1.y)*(p2.y-p1.y));
-}
-
-double getSlope(Point p1, Point p2) {
-    return static_cast<double>(p2.y-p1.y) / (p2.x - p1.x);
-}
-
-Segment createSegment(Point p1, Point p2) {
-    Segment seg;
-    seg.length = getLength(p1,p2);
-    seg.slope = getSlope(p1,p2);
-    return seg;
-}
-
 
 int main() {
 
@@ -77,23 +77,23 @@ int main() {
             in >> pnt.x >> pnt.y;
         }
 
-        bool found = false;
+        bool found = false; //Have we found a triangle pair?
         for(size_t firstPointIndex = 0; firstPointIndex < pointCount; ++firstPointIndex) {
             for (size_t secondPointIndex = firstPointIndex+1; secondPointIndex < pointCount; ++secondPointIndex) {
-                Segment currentSegment = createSegment(points[firstPointIndex],points[secondPointIndex]);
+
+                Segment currentSegment(points[firstPointIndex],points[secondPointIndex]);
                 segmentCount[currentSegment] ++;
-                if(segmentCount[currentSegment] >= 3) {
-                    out << "DA\n";
+                if(segmentCount[currentSegment] >= 3) {  // If we found the same segment 3 times,
+                    out << "DA\n";                       // we found a pair of triangles
                     found = true;
                     break;
                 }
             }
-            if(found) break;
+            if(found) break; // Break out if triangle pair has been found.
         }
         if(!found)
             out << "NU\n";
     }
-
 
     return 0;
 }
