@@ -1,27 +1,32 @@
 #include <iostream>
 #include <fstream>
-#include <unordered_map>
 
 using namespace std;
+
 ifstream in("aparitii.in");
 ofstream out("aparitii.out");
 
-unsigned cifFr[10][10];
+// digitFrec[digitPos][digit] show the number of times digit
+// appears in position digitPos (counted form right to left)
+unsigned digitFrec[10][10];
 
-void ProcessNr(unsigned n) {
-	size_t i = 0;
-	while(n) {
-		cifFr[i++][n%10]++;
-		n/=10;
+void ProcessNumber(unsigned number) {
+	size_t digitPos = 0;
+	while(number) {
+		digitFrec[digitPos++][number % 10]++;
+		number/=10;
 	}
 }
 
+// This works because if we have a digit appear in a position
+// a number of times which is not divisible by k, then that digit
+// has that position in the missing number we are trying to find.
 unsigned MissingNumber(unsigned k) {
 	unsigned number = 0;
-	for(int i = 9; i >= 0; --i) {
-		number*=10;
-		for(unsigned c = 0; c < 10; ++c) {
-			if(cifFr[i][c]%k!=0)
+	for(int digitPos = 9; digitPos >= 0; --digitPos) {
+		number *= 10;
+		for(unsigned digit = 0; digit < 10; ++digit) {
+			if(digitFrec[digitPos][digit] % k != 0)
 				number += c;
 		}
 	}
