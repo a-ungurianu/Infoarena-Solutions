@@ -1,76 +1,82 @@
 #include <fstream>
+#include <vector>
 
 using namespace std;
 
-struct TrieNode {
-    unsigned cnt,nrSons;
-    char c;
-    bool toDelete;
-    TrieNode *chd['z'-'a'+1];
+class TrieNode {
 
-    TrieNode() {
-        cnt = nrSons = 0;
-        toDelete = false;
-        for(size_t i = 0; i < 'z'-'a'+1; ++i)
-            chd[i] = nullptr;
-    }
-    TrieNode(char c) {
-        this->c = c;
-        cnt = nrSons = 0;
-        toDelete = false;
-        for(size_t i = 0; i < 'z'-'a'+1; ++i)
-            chd[i] = nullptr;
-    }
-    void insertWord(string::iterator c, string::iterator fn) {
-        if(c!=fn) {
-            if(!chd[*c-'a']) {
-                chd[*c-'a'] = new TrieNode(*c);
-                nrSons++;
+public:
+
+    TrieNode() : TrieNode('\0') {}
+
+    TrieNode(char symbol) :
+        symbol(symbol),
+        count(0),
+        childCount(0),
+        toDelete(false),
+        child(sigma) {}
+
+    // Used iterators instead of strings for efficiency reasons
+    void insertWord(string::iterator curr, string::iterator end) {
+        if(curr!=end) {
+            if(!child[*curr - 'a']) {
+                child[*curr - 'a'] = new TrieNode(*curr - 'a');
+                childCount++;
             }
-            chd[*c-'a']->insertWord(c+1,fn);
+            child[*curr - 'a']->insertWord(curr+1,end);
         }
         else
-            cnt++;
+            count++;
     }
 
-    void deleteWord(string::iterator c, string::iterator fn) {
-        if(c!=fn) {
-            if(chd[*c-'a']) {
-                chd[*c-'a']->deleteWord(c+1,fn);
-                if(chd[*c-'a']->toDelete) {
-                    nrSons--;
-                    delete chd[*c-'a'];
-                    chd[*c-'a'] = nullptr;
+    void deleteWord(string::iterator curr, string::iterator end) {
+        if(curr!=end) {
+            if(child[*curr - 'a']) {
+                child[*curr - 'a']->deleteWord(curr+1,end);
+                if(child[*curr - 'a']->toDelete) {
+                    childCount--;
+                    delete child[*curr - 'a'];
+                    child[*curr - 'a'] = nullptr;
 
                 }
-                if(nrSons == 0 && cnt == 0) {
+                if(childCount == 0 && count == 0) {
                     toDelete = true;
                 }
             }
         }
         else {
-            cnt--;
-            if(nrSons==0 && cnt==0) {
+            count--;
+            if(childCount==0 && count==0) {
                 toDelete = true;
             }
         }
     }
 
-    unsigned findWord(string::iterator c, string::iterator fn) {
-        if(c!=fn)
-            if(chd[*c-'a'])
-                return chd[*c-'a']->findWord(c+1,fn);
+    unsigned findWord(string::iterator curr, string::iterator end) {
+        if(curr!=end)
+            if(child[*curr - 'a'])
+                return child[*curr - 'a']->findWord(curr+1,end);
             else
                 return 0;
         else {
-            return cnt;
+            return count;
         }
     }
-    unsigned longestPrefix(string::iterator c, string::iterator fn) {
-        if(c!=fn && chd[*c-'a'])
-                return 1 + chd[*c-'a']->longestPrefix(c+1,fn);
+    unsigned longestPrefix(string::iterator curr, string::iterator end) {
+        if(curr!=end && child[*curr - 'a'])
+                return 1 + child[*curr - 'a']->longestPrefix(curr+1,end);
         return 0;
     }
+
+private:
+    static const unsigned sigma = 'z'-'a'+1;
+
+    unsigned count;
+    unsigned childCount;
+    char symbol;
+    bool toDelete;
+
+    vector<TrieNode *> child;
 };
 
 
