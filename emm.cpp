@@ -1,45 +1,99 @@
-#include <cstdio>
-#include <cstring>
-#include <algorithm>
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <map>
 
-char s[100010];
-char *p=s;
-char operand[4][4] = {"Mm", "*/", "^", ""};
-const long hmax = 1;
+using namespace std;
 
-long operatie(long x, long y, char c) {
-    switch ( c ) {
-        case 'm': return std::min(x,y);
-        case 'M': return std::max(x,y);
-        case '*': return x*y;
-        case '/': return x/y;
-    }
-    return 0;
+ifstream in("emm.in");
+ofstream out("emm.out");
+
+struct Token {
+	char type;
+	int value;
+};
+
+const unsigned max_lvl = 1;
+map<char,unsigned> prec{{'m',0},{'M',0},{')',100},{'e',100}};
+
+Token next_token(string::const_iterator &it) {
+	switch(*it) {
+		case 'M':
+		case 'm':
+		case '(':
+		case ')':
+			return {*it++,0};
+	}
+
+	int res = 0;
+	while('0' <= *it && *it <= '9') {
+		res = res*10 + (*it-'0');
+		it++;
+	}
+	return {'n',res};
 }
 
-long eval(long);
+vector<Token> tokenize(const string &s) {
+	vector<Token> tokens;
+	auto it = s.cbegin();
 
-long element() {
-    long r=0;
-    if ( *p == '(' ) {
-        ++p; r = eval(0); ++p;
-    } else {
-        while ( strchr("0123456789", *p) )
-            r = r*10 + *(++p-1) - '0';
-    }
-    return r;
+	while(it < s.cend()) {
+		tokens.push_back(next_token(it));
+	}
+
+	tokens.push_back({'e',0});
+
+	return tokens;
 }
 
-long eval(long h) {
-    long r = (h==hmax)?element():eval(h+1);
-    while ( strchr(operand[h], *p) )
-        r = operatie(r, eval(h+1), *(++p-1));
-    return r;
+int eval(int a, int b, char op) {
+	switch(op) {
+		case 'M':
+			return max(a,b);
+		case 'm':
+			return min(a,b);
+	}
+
+	cerr << "[eval] Expected operator, got " << op << '\n';
 }
 
+int expr(vector<Token>::iterator &it, unsigned lvl) {
+	int res = 0;
+	if(lvl == max_lvl) {
+		if(it->type == '(') {
+			it++;
+			res = expr(it,0);
+			it++;
+		}
+		else {
+			if(it->type != 'n') {
+				cerr << "[expr] Expected number, got " << it->type << '\n';
+			}
+			res = it->value;
+			it++;
+		}
+	}
+	else {
+		res = expr(it,lvl+1);
+		while(prec[it->type] == lvl) {
+			char op = it->type;
+			it++;
+			res = eval(res,expr(it,lvl+1),op);
+		}
+	}
+	return res;
+}
 
 int main() {
-    fgets(s, 100010, fopen("emm.in", "r"));
-    fprintf(fopen("emm.out", "w"), "%ld\n", eval(0));
-    return 0;
+	string s;
+
+	in >> s;
+
+	vector<Token> tokens = tokenize(s);	
+
+	auto it = tokens.begin();
+
+	out << expr(it,0) << '\n';
+
+	return 0;
 }
