@@ -1,44 +1,118 @@
-#include <cstdio>
-#include <cstring>
- 
-char s[100010];
-char *p=s;
-char operand[4][4] = {"+-", "*/", "^", ""};
-const long hmax = 2;
- 
-long operatie(long x, long y, char c) {
-    switch ( c ) {
-        case '+': return x+y;
-        case '-': return x-y;
-        case '*': return x*y;
-        case '/': return x/y;
-    }
-    return 0;
+#include <fstream>
+#include <iostream>
+#include <vector>
+#include <string>
+#include <map>
+
+using namespace std;
+
+ifstream in("evaluare.in");
+ofstream out("evaluare.out");
+
+map<char,unsigned> prec{{'+',0},{'-',0},{'*',1},{'/',1},{'e',100},{')',100}};
+
+struct Token {
+	char type;
+	int value;
+};
+
+ostream& operator<<(ostream &os, const Token &t) {
+	if(t.type == 'n') {
+		os << "n=" << t.value;
+	}
+	else {
+		os << t.type;
+	}
+
+	return os;
 }
- 
-long eval(long);
- 
-long element() {
-    long r=0;
-    if ( *p == '(' ) {
-        ++p; r = eval(0); ++p;
-    } else {
-        while ( strchr("0123456789", *p) )
-            r = r*10 + *(++p-1) - '0';
-    }
-    return r;
+
+Token next_token(string::iterator &it) {
+	switch(*it) {
+		case '+':
+		case '*':
+		case '-':
+		case '/': 
+		case '(':
+		case ')':
+			return {*it++,0};
+	}
+
+	int nr = 0;
+	while('0' <= *it && *it <= '9') {
+		nr = nr*10 + (*it-'0');
+		it++;
+	}
+	return {'n',nr};
 }
- 
-long eval(long h) {
-    long r = (h==hmax)?element():eval(h+1);
-    while ( strchr(operand[h], *p) )
-        r = operatie(r, eval(h+1), *(++p-1));
-    return r;
+
+int op(int a, int b, char op) {
+	switch(op) {
+		case '+':
+			return a+b;
+		case '-':
+			return a-b;
+		case '*':
+			return a*b;
+		case '/':
+			return a/b;
+	}
+
+	cerr << "[op] Expected operator, got " << op << '\n';
 }
- 
- 
+
+int eval(vector<Token>::iterator &it,unsigned lvl) {
+	int res;
+	if(lvl == 2) {
+		if(it->type == '(') {
+			++it;
+			res = eval(it,0);
+			++it;
+		}
+		else {
+			if(it->type != 'n') {
+				cerr << "[eval] Expected number, got " << it->type << '\n';
+			}
+			res = it->value;
+			it++;
+		}
+	}
+	else {
+		res = eval(it,lvl+1);
+		while(prec[it->type] == lvl) {
+			char type = it->type;
+			it++;
+			res = op(res,eval(it,lvl+1),type);
+		}
+	}
+	return res;
+}
+
+vector<Token> tokenize(string s) {
+	vector<Token> tokens;
+	auto it = s.begin();
+	while(it < s.end()) {
+		tokens.push_back(next_token(it));
+	}
+
+	tokens.push_back({'e',0});
+
+	return move(tokens);
+}
+
 int main() {
-    fgets(s, 100010, fopen("evaluare.in", "r"));
-    fprintf(fopen("evaluare.out", "w"), "%ld\n", eval(0));
-    return 0;
+	string s;
+	in >> s;
+
+	vector<Token> tokens = tokenize(s);
+
+	// for(Token t:tokens) {
+	// 	cout << t << ' ';
+	// }
+
+	auto it = tokens.begin();
+
+	out << eval(it,0);
+
+	return 0;
 }
